@@ -58,3 +58,35 @@ SELECT
     ROUND(STDDEV(ER_Time), 2)        AS std_er_time,
     ROUND(STDDEV(Rating), 2)         AS std_rating
 FROM patient;
+
+
+-- 6. Duplicate patient name check
+SELECT Name, COUNT(*) AS occurrences
+FROM patient
+GROUP BY Name
+HAVING COUNT(*) > 1
+ORDER BY occurrences DESC;
+
+-- 7. Patients with zero LOS (same day discharge)
+SELECT COUNT(*) AS same_day_discharge 
+FROM patient 
+WHERE LOS = 0;
+
+-- 8. Patients with unusually high treatment cost (above 1000)
+SELECT p.Patient_ID, p.Name, p.Age, p.Treatemen_Cost, p.Status, d.Department_Name
+FROM patient p
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE Treatemen_Cost > 1000
+ORDER BY Treatemen_Cost DESC;
+
+-- 9. Check if all Dpt_IDs in patient exist in department table
+SELECT DISTINCT p.Dpt_ID
+FROM patient p
+LEFT JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE d.Dpt_ID IS NULL;
+ 
+-- 10. Check if all Staff_Ids in patient exist in staff_details
+SELECT DISTINCT p.Staff_Id
+FROM patient p
+LEFT JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+WHERE s.Staff_Id IS NULL;
