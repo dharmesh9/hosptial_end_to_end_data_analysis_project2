@@ -48,7 +48,6 @@ SELECT
     MIN(ER_Time)        AS min_er,     MAX(ER_Time)        AS max_er,     ROUND(AVG(ER_Time),2)        AS avg_er,
     MIN(Rating)         AS min_rating, MAX(Rating)         AS max_rating, ROUND(AVG(Rating),2)         AS avg_rating
 FROM patient;
-SELECT * FROM patient;
 
 -- 5. Standard deviation of numeric columns
 SELECT
@@ -90,3 +89,33 @@ SELECT DISTINCT p.Staff_Id
 FROM patient p
 LEFT JOIN staff_details s ON p.Staff_Id = s.Staff_Id
 WHERE s.Staff_Id IS NULL;
+
+-- 11. Check if all Bed_IDs in patient exist in bed_details
+SELECT DISTINCT p.Bed_ID
+FROM patient p
+LEFT JOIN bed_details b ON p.Bed_ID = b.Bed_ID
+WHERE b.Bed_ID IS NULL AND p.Bed_ID IS NOT NULL;
+
+-- 12. Count of inpatients without a bed assigned (data anomaly)
+SELECT COUNT(*) AS inpatients_no_bed
+FROM patient
+WHERE Patient_Type = 'Inpatient' AND Bed IS NULL;
+
+-- 13. Age distribution by bucket with percentage
+SELECT Age_Bucket, COUNT(*) AS total,
+       ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient
+GROUP BY Age_Bucket
+ORDER BY total DESC;
+
+-- 14. Gender distribution
+SELECT Gender, COUNT(*) AS total_patients,
+ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient p
+GROUP BY Gender;
+
+-- 15. Patient type distribution
+SELECT Patient_Type, COUNT(*) AS total_patients,
+ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient p
+GROUP BY Patient_Type;
