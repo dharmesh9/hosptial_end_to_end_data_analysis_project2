@@ -119,3 +119,45 @@ SELECT Patient_Type, COUNT(*) AS total_patients,
 ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
 FROM patient p
 GROUP BY Patient_Type;
+
+-- 16. Status distribution
+SELECT Status, COUNT(*) as total_patients,
+ROUND(COUNT(*)*100/(SELECT count(*) FROM patient),2) AS  percentage
+FROM patient p
+GROUP BY Status
+ORDER BY total_patients DESC;
+
+-- 17. Rating distribution
+SELECT Rating, COUNT(*) as total_patients,
+Round(COUNT(*)*100/(Select COUNT(*) FROM patient),2) AS percentage
+FROM patient p
+GROUP BY Rating
+ORDER BY Rating DESC;
+
+-- 18. Feedback distribution
+SELECT Feedback, COUNT(*) AS total_patients,
+ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient p
+GROUP BY Feedback 
+ORDER BY total_patients DESC;
+
+-- 19. FZ_Me (sentiment) distribution
+SELECT FZ_Me, COUNT(*) AS total_patients,
+ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient 
+GROUP BY FZ_Me 
+ORDER BY total_patients DESC;
+
+SELECT
+    CASE
+        WHEN Treatemen_Cost < 100  THEN 'Under 100'
+        WHEN Treatemen_Cost < 300  THEN '100-299'
+        WHEN Treatemen_Cost < 500  THEN '300-499'
+        WHEN Treatemen_Cost < 700  THEN '500-699'
+        WHEN Treatemen_Cost < 1000 THEN '700-999'
+        ELSE '1000+'
+    END AS cost_range,
+    COUNT(*) AS total_patients,
+    ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient
+GROUP BY cost_range ORDER BY MIN(Treatemen_Cost);
