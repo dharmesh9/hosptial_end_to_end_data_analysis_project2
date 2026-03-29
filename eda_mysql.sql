@@ -235,3 +235,62 @@ ROUND(COUNT(Patient_ID)*100.0/(SELECT COUNT(*) FROM patient p),2) as percentage
 FROM patient p
 GROUP BY Custom
 ORDER BY total_patient DESC;
+
+-- 28. Department patient count distribution
+SELECT d.Department_name, COUNT(p.Patient_ID) AS total_patients
+FROM patient p
+JOIN department d On d.Dpt_ID = p.Dpt_ID
+GROUP BY d.Department_Name
+ORDER BY total_patients DESC;
+
+
+-- 29. Staff patient count distribution
+SELECT s.`Staff Name` as staff_name, COUNT(p.Patient_ID) as total_patients
+FROM patient p
+JOIN staff_details s on s.Staff_Id = p.Staff_Id
+GROUP BY staff_name 
+ORDER BY total_patients DESC;
+
+
+-- 30. Year-wise patient volume
+SELECT SUBSTRING(Admission_Dates,7,4) AS year, COUNT(*) AS total_patients
+FROM patient 
+GROUP BY year;
+
+ 
+-- 31. Gender vs Status	_
+SELECT Gender, Status, COUNT(Patient_ID) as total_patients
+FROM patient p
+GROUP BY 1,2
+ORDER BY 1,3 DESC;
+
+-- 32. Gender vs Average treatment cost and LOS
+SELECT Gender,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2)            AS avg_los,
+       ROUND(AVG(ER_Time),2)        AS avg_er,
+       ROUND(AVG(Rating),2)         AS avg_rating
+FROM patient GROUP BY Gender;
+
+
+-- 33. Patient type vs Status
+SELECT Patient_Type, Status, COUNT(*) AS total_patients
+FROM patient 
+GROUP BY 1,2 
+ORDER BY 1, 3 DESC;
+ 
+-- 34. Age bucket vs Average cost and LOS
+SELECT Age_Bucket,
+       COUNT(*) AS total,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2)            AS avg_los,
+       ROUND(AVG(ER_Time),2)        AS avg_er
+FROM patient 
+GROUP BY 1 
+ORDER BY 3 DESC;
+ 
+-- 35. Age bucket vs Status
+SELECT Age_Bucket, Status, COUNT(*) AS total_patients
+FROM patient 
+GROUP BY 1,2 
+ORDER BY 1,3 DESC;
