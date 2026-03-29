@@ -148,6 +148,7 @@ FROM patient
 GROUP BY FZ_Me 
 ORDER BY total_patients DESC;
 
+-- 20. Treatment cost buckets
 SELECT
     CASE
         WHEN Treatemen_Cost < 100  THEN 'Under 100'
@@ -161,3 +162,76 @@ SELECT
     ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
 FROM patient
 GROUP BY cost_range ORDER BY MIN(Treatemen_Cost);
+
+-- 21. LOS distribution buckets 
+SELECT Min(LOS) AS LOS,
+CASE
+        WHEN LOS = 0              THEN 'Same day'
+        WHEN LOS BETWEEN 1 AND 3  THEN '1-3 days'
+        WHEN LOS BETWEEN 4 AND 7  THEN '4-7 days'
+        WHEN LOS BETWEEN 8 AND 14 THEN '8-14 days'
+        ELSE '15+ days'
+    END AS los_range,
+    COUNT(*) AS total_patients,
+    ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient p
+GROUP BY los_range 
+ORDER BY LOS;
+
+-- 22. ER Time distribution buckets
+SELECT
+    CASE
+        WHEN ER_Time IS NULL       THEN 'No ER'
+        WHEN ER_Time < 30          THEN 'Under 30 min'
+        WHEN ER_Time BETWEEN 30 AND 60 THEN '30-60 min'
+        WHEN ER_Time BETWEEN 61 AND 90 THEN '61-90 min'
+        ELSE 'Over 90 min'
+    END AS er_range,
+    COUNT(*) AS total_patients,
+    ROUND(COUNT(*)*100.0/(SELECT COUNT(*) FROM patient),2) AS percentage
+FROM patient 
+GROUP BY er_range;
+ 
+-- 23. Age distribution (raw, in 10-year bands)
+SELECT
+    CASE
+        WHEN Age < 10              THEN '0-9'
+        WHEN Age BETWEEN 10 AND 19 THEN '10-19'
+        WHEN Age BETWEEN 20 AND 29 THEN '20-29'
+        WHEN Age BETWEEN 30 AND 39 THEN '30-39'
+        WHEN Age BETWEEN 40 AND 49 THEN '40-49'
+        WHEN Age BETWEEN 50 AND 59 THEN '50-59'
+        WHEN Age BETWEEN 60 AND 69 THEN '60-69'
+        ELSE '70+'
+    END AS age_group,
+    COUNT(*) AS total_patients
+FROM patient 
+GROUP BY age_group 
+ORDER BY MIN(Age);
+
+-- 24. Top 10 cities by patient count
+SELECT City, COUNT(Patient_ID) AS total_patient
+FROM patient p
+GROUP BY City
+ORDER BY total_patient DESC
+LIMIT 10;
+
+-- 25. Top 10 states by patient count
+SELECT State, COUNT(Patient_ID) AS total_patient
+FROM patient p
+GROUP BY State
+ORDER BY total_patient DESC
+LIMIT 10;
+
+-- 26. Bed occupancy distribution
+SELECT Bed as Bed_Status, COUNT(Patient_ID) AS total_patient,
+ROUND(COUNT(Patient_ID)*100.0/(SELECT COUNT(*) FROM patient p),2) as percentage
+FROM patient p
+GROUP BY Bed;
+
+-- 27. Custom (stay duration) distribution
+SELECT Custom,COUNT(Patient_ID) AS total_patient,
+ROUND(COUNT(Patient_ID)*100.0/(SELECT COUNT(*) FROM patient p),2) as percentage
+FROM patient p
+GROUP BY Custom
+ORDER BY total_patient DESC;
