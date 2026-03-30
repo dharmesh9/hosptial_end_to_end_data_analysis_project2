@@ -300,7 +300,7 @@ SELECT Rating, Feedback, COUNT(*) as total_patients
 FROM patient p
 GROUP BY 1,2
 ORDER BY 3 DESC;
-
+	
 -- 37. FZ_Me vs Average rating and cost
 SELECT FZ_Me,
        COUNT(*) AS total_patients,
@@ -334,3 +334,37 @@ FROM patient p
 GROUP BY State 
 ORDER BY total_patients DESC 
 LIMIT 10;
+
+-- 41. Status vs Average treatment cost and LOS
+SELECT Status,
+       COUNT(*) AS total_patients,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2)            AS avg_los
+FROM patient p GROUP BY Status 
+ORDER BY avg_cost DESC;
+
+-- 42. Feedback vs LOS
+SELECT Feedback,
+       ROUND(AVG(LOS),2)            AS avg_los,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(Rating),2)         AS avg_rating,
+       COUNT(*) AS total_patients
+FROM patient p GROUP BY Feedback ORDER BY avg_rating DESC;
+
+-- 43. Gender vs Age bucket
+SELECT Gender, Age_Bucket, COUNT(*) AS total_patients
+FROM patient p
+GROUP BY 1,2
+ORDER BY Gender, total_patients DESC;
+
+-- 44. Patient type vs Average rating
+SELECT Patient_Type,
+       ROUND(AVG(Rating),2)         AS avg_rating,
+       COUNT(*) AS total_patients
+FROM patient GROUP BY Patient_Type;
+
+-- 45. Bed occupancy vs Status
+SELECT Bed, Status, COUNT(*) AS total
+FROM patient 
+GROUP BY Bed, Status 
+ORDER BY Bed, total DESC;
