@@ -294,3 +294,43 @@ SELECT Age_Bucket, Status, COUNT(*) AS total_patients
 FROM patient 
 GROUP BY 1,2 
 ORDER BY 1,3 DESC;
+
+-- 36. Rating vs Feedback cross check
+SELECT Rating, Feedback, COUNT(*) as total_patients
+FROM patient p
+GROUP BY 1,2
+ORDER BY 3 DESC;
+
+-- 37. FZ_Me vs Average rating and cost
+SELECT FZ_Me,
+       COUNT(*) AS total_patients,
+       ROUND(AVG(Rating),2)         AS avg_rating,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2)            AS avg_los
+FROM patient p
+GROUP BY FZ_Me 
+ORDER BY avg_rating DESC;
+
+-- 38. LOS vs Patient type and status
+SELECT Patient_Type, Status,
+       ROUND(AVG(LOS),2) AS avg_los,
+       MAX(LOS) AS max_los,
+       COUNT(*) AS total_patients
+FROM patient  p
+GROUP BY 1,2
+ORDER BY avg_los DESC;
+
+-- 39. Gender vs Feedback
+SELECT Gender, Feedback, COUNT(*) AS total
+FROM patient p
+GROUP BY Gender, Feedback 
+ORDER BY Gender, total DESC;
+
+-- 40. State vs Average treatment cost (top 10 states)
+SELECT State, COUNT(*) AS total_patients,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(SUM(Treatemen_Cost),2) AS total_revenue
+FROM patient p
+GROUP BY State 
+ORDER BY total_patients DESC 
+LIMIT 10;
