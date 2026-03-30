@@ -364,7 +364,41 @@ SELECT Patient_Type,
 FROM patient GROUP BY Patient_Type;
 
 -- 45. Bed occupancy vs Status
-SELECT Bed, Status, COUNT(*) AS total
+SELECT Bed, Status, COUNT(*) AS total_patients
 FROM patient 
 GROUP BY Bed, Status 
-ORDER BY Bed, total DESC;
+ORDER BY Bed, total_patients DESC;
+
+-- 46. Rating vs Status
+SELECT Rating, Status, COUNT(*) AS total_patients
+FROM patient p 
+GROUP BY Rating, Status 
+ORDER BY Rating, total_patients DESC;
+ 
+-- 47. Age bucket vs Feedback
+SELECT Age_Bucket, Feedback, COUNT(*) AS total_patients
+FROM patient p
+GROUP BY Age_Bucket, Feedback 
+ORDER BY Age_Bucket, total_patients DESC;
+ 
+-- 48. City vs Average treatment cost (top 10)
+SELECT City,
+       COUNT(*) AS total_patients,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost
+FROM patient p
+GROUP BY City 
+ORDER BY total_patients DESC LIMIT 10;
+ 
+-- 49. Custom (duration bucket) vs Status
+SELECT Custom, Status, COUNT(*) AS total_patients
+FROM patient p
+GROUP BY Custom, Status 
+ORDER BY Custom, total_patients DESC;
+ 
+-- 50. Gender vs FZ_Me sentiment
+SELECT Gender, FZ_Me, COUNT(*) AS total_patients,
+       ROUND(COUNT(*)*100.0/SUM(COUNT(*)) OVER (PARTITION BY Gender),2) AS pct_within_gender
+FROM patient p
+GROUP BY Gender, FZ_Me 
+ORDER BY Gender, total_patients DESC;
+
