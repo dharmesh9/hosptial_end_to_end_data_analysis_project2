@@ -468,3 +468,68 @@ FROM patient p
 JOIN department d ON p.Dpt_ID = d.Dpt_ID
 GROUP BY 1 
 ORDER BY 4 DESC;
+
+-- 58. Department cost quartile (NTILE)
+SELECT Department_Name, avg_cost,
+       NTILE(4) OVER (ORDER BY avg_cost) AS cost_quartile
+FROM (
+    SELECT d.Department_Name, ROUND(AVG(p.Treatemen_Cost),2) AS avg_cost
+    FROM patient p JOIN department d ON p.Dpt_ID = d.Dpt_ID
+    GROUP BY d.Department_Name
+) dept_avg;
+
+-- 59. Department feedback breakdown
+SELECT d.Department_Name, p.Feedback, COUNT(*) AS total
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name, p.Feedback 
+ORDER BY d.Department_Name, total DESC;
+
+-- 60. Department with highest readmission count
+SELECT d.Department_Name, COUNT(*) AS readmissions
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.Status = 'Readmit'
+GROUP BY d.Department_Name 
+ORDER BY readmissions DESC;
+
+-- 61. Average ER time per department
+SELECT d.Department_Name, ROUND(AVG(p.ER_Time),2) as avg_er_time
+FROM patient p 
+JOIN department d on p.Dpt_ID = d.Dpt_ID
+WHERE p.ER_Time IS NOT NULL
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- 62. Department with lowest avg rating
+SELECT d.Department_Name, ROUND(AVG(p.Rating),2) AS avg_rating
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name
+ORDER BY avg_rating ASC;
+ 
+-- 63. Department with highest negative sentiment
+SELECT d.Department_Name,
+       SUM(CASE WHEN p.FZ_Me='Negative' THEN 1 ELSE 0 END) AS negative_count,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Negative' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS negative_pct
+FROM patient p JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name
+HAVING negative_pct > 20 
+ORDER BY negative_pct DESC;
+ 
+-- 64. Department inpatient vs outpatient split
+SELECT d.Department_Name,
+       SUM(CASE WHEN p.Patient_Type='Inpatient'  THEN 1 ELSE 0 END) AS inpatients,
+       SUM(CASE WHEN p.Patient_Type='outpatient' THEN 1 ELSE 0 END) AS outpatients,
+       COUNT(*) AS total_patients
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name 
+ORDER BY total_patients DESC;
+ 
+-- 65. Department average age
+SELECT d.Department_Name, ROUND(AVG(p.Age),1) AS avg_age
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name 
+ORDER BY avg_age DESC;
