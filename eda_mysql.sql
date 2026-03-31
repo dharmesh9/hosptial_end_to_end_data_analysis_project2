@@ -402,3 +402,69 @@ FROM patient p
 GROUP BY Gender, FZ_Me 
 ORDER BY Gender, total_patients DESC;
 
+-- 51. Full department scorecard
+SELECT d.Department_Name,
+       COUNT(p.Patient_ID)                                                             AS total_patients,
+       ROUND(AVG(p.Treatemen_Cost),2)                                                  AS avg_cost,
+       ROUND(SUM(p.Treatemen_Cost),2)                                                  AS total_revenue,
+       ROUND(AVG(p.Rating),2)                                                          AS avg_rating,
+       ROUND(AVG(p.LOS),2)                                                             AS avg_los,
+       ROUND(AVG(p.ER_Time),2)                                                         AS avg_er_time,
+       SUM(CASE WHEN p.Status='ICU'      THEN 1 ELSE 0 END)                           AS icu_count,
+       SUM(CASE WHEN p.Status='Death'    THEN 1 ELSE 0 END)                           AS death_count,
+       SUM(CASE WHEN p.Status='Readmit'  THEN 1 ELSE 0 END)                           AS readmit_count,
+       SUM(CASE WHEN p.Status='Discharge'THEN 1 ELSE 0 END)                           AS discharge_count,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Postive' THEN 1 ELSE 0 END)*100.0/COUNT(*),2)    AS positive_pct,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Negative'THEN 1 ELSE 0 END)*100.0/COUNT(*),2)    AS negative_pct,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Neutral'THEN 1 ELSE 0 END)*100.0/COUNT(*),2)    AS neutral_pct
+FROM patient p
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name ORDER BY total_patients DESC;
+
+-- 52. Department vs Gender split
+SELECT  p.Gender,d.Department_Name, count(Patient_ID) as total_patients
+FROM patient p
+JOIN department d on d.Dpt_ID = p.Dpt_ID
+GROUP BY  p.Gender,d.Department_Name
+ORDER BY total_patients DESC;
+
+-- 53. Department vs Age bucket
+SELECT d.Department_Name, p.Age_Bucket, COUNT(Patient_ID) as total_patients
+FROM patient p
+JOIN department d on d.Dpt_ID = p.Dpt_ID
+GROUP BY 1,2
+ORDER BY 1 DESC;
+
+-- 54. Department vs Patient type
+SELECT d.Department_Name, p.Patient_Type, count(Patient_ID) as total_patients
+FROM patient p 
+JOIN department d on d.Dpt_ID = p.Dpt_ID
+GROUP BY 1,2
+ORDER BY 1;
+
+ 
+-- 55. Department revenue rank (window function)
+SELECT d.Department_Name,
+       ROUND(SUM(p.Treatemen_Cost),2) AS total_revenue,
+       RANK() OVER (ORDER BY SUM(p.Treatemen_Cost) DESC) AS revenue_rank
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name;
+
+-- 56. Department death rate
+SELECT d.Department_Name, COUNT(Patient_ID) as total_patients,
+SUM(CASE WHEN p.Status = "Death" THEN 1 ELSE 0 END) as deaths,
+ROUND(SUM(CASE WHEN p.Status='Death' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS death_rate_pct
+FROM patient p 
+JOIN department d on p.Dpt_ID =d.Dpt_ID
+GROUP BY 1
+ORDER BY 4 DESC;
+
+-- 57. Department ICU rate
+SELECT d.Department_Name, COUNT(*) AS total,
+       SUM(CASE WHEN p.Status='ICU' THEN 1 ELSE 0 END) AS icu_count,
+       ROUND(SUM(CASE WHEN p.Status='ICU' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS icu_rate_pct
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY 1 
+ORDER BY 4 DESC;
