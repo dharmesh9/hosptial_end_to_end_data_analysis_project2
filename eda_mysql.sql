@@ -533,3 +533,61 @@ FROM patient p
 JOIN department d ON p.Dpt_ID = d.Dpt_ID
 GROUP BY d.Department_Name 
 ORDER BY avg_age DESC;
+
+-- 66. Staff full performance report
+SELECT s.`Staff Name`,
+       COUNT(p.Patient_ID)                                                              AS total_patients,
+       ROUND(AVG(p.Treatemen_Cost),2)                                                   AS avg_cost,
+       ROUND(SUM(p.Treatemen_Cost),2)                                                   AS total_revenue,
+       ROUND(AVG(p.Rating),2)                                                           AS avg_rating,
+       ROUND(AVG(p.LOS),2)                                                              AS avg_los,
+       SUM(CASE WHEN p.Status='ICU'    THEN 1 ELSE 0 END)                              AS icu_cases,
+       SUM(CASE WHEN p.Status='Death'  THEN 1 ELSE 0 END)                              AS death_cases,
+       SUM(CASE WHEN p.Status='Readmit'THEN 1 ELSE 0 END)                              AS readmit_cases,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Postive' THEN 1 ELSE 0 END)*100.0/COUNT(*),2)     AS satisfaction_pct
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+GROUP BY s.`Staff Name` 
+ORDER BY satisfaction_pct DESC;
+
+-- 67. Top staff per department by patient count
+SELECT Department_Name, Staff_Name, total_patients
+FROM (
+    SELECT d.Department_Name, s.`Staff Name` AS Staff_Name,
+           COUNT(p.Patient_ID) AS total_patients,
+           RANK() OVER (PARTITION BY d.Department_Name ORDER BY COUNT(p.Patient_ID) DESC) AS rnk
+    FROM patient p
+    JOIN department d    ON p.Dpt_ID   = d.Dpt_ID
+    JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+    GROUP BY d.Department_Name, s.`Staff Name`
+) ranked WHERE rnk = 1;
+
+
+-- 68. Staff handling both inpatients and outpatients
+
+SELECT s.`Staff Name`,
+SUM(CASE WHEN p.Patient_Type = 'Inpatient' THEN 1 ELSE 0 END) AS total_inpatients,
+SUM(CASE WHEN p.Patient_Type = 'outpatient' THEN 1 ELSE 0 END) AS total_outpatients
+FROM patient p 
+JOIN staff_details s on p.Staff_Id = s.Staff_Id
+GROUP BY s.`Staff Name`
+HAVING total_inpatients > 0 AND total_outpatients > 0
+ORDER BY total_inpatients,total_outpatients;
+
+-- 69. Bottom 10 staff by avg rating
+SELECT s.`Staff Name`, COUNT(p.Patient_ID) AS total, 
+ROUND(AVG(p.Rating),2) AS avg_rating
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+GROUP BY s.`Staff Name` 
+ORDER BY avg_rating ASC LIMIT 10;
+
+-- 70. Staff handling ICU and Death cases
+SELECT s.`Staff Name`,
+       SUM(CASE WHEN p.Status='ICU'   THEN 1 ELSE 0 END) AS icu_cases,
+       SUM(CASE WHEN p.Status='Death' THEN 1 ELSE 0 END) AS death_cases
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+GROUP BY s.`Staff Name`
+HAVING icu_cases > 0 AND death_cases > 0
+ORDER BY death_cases DESC;
