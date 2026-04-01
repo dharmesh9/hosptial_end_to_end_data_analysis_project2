@@ -591,3 +591,54 @@ JOIN staff_details s ON p.Staff_Id = s.Staff_Id
 GROUP BY s.`Staff Name`
 HAVING icu_cases > 0 AND death_cases > 0
 ORDER BY death_cases DESC;
+
+-- 71. Staff satisfaction ranked using CTE
+WITH staff_scores AS (
+    SELECT s.`Staff Name`,
+           COUNT(p.Patient_ID) AS total,
+           ROUND(SUM(CASE WHEN p.FZ_Me='Postive' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS satisfaction_pct,
+           ROUND(AVG(p.Rating),2) AS avg_rating
+    FROM patient p 
+    JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+    GROUP BY s.`Staff Name`
+)
+SELECT *, 
+RANK() OVER (ORDER BY satisfaction_pct DESC) AS satisfaction_rank
+FROM staff_scores 
+ORDER BY satisfaction_rank;
+
+ 
+-- 72. Staff revenue contribution %
+SELECT s.`Staff Name`,
+       ROUND(SUM(p.Treatemen_Cost),2) AS revenue,
+       ROUND(SUM(p.Treatemen_Cost)*100.0/(SELECT SUM(Treatemen_Cost) FROM patient),2) AS revenue_pct
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+GROUP BY s.`Staff Name` 
+ORDER BY revenue DESC;
+
+-- 73. Staff average ER time
+SELECT s.`Staff Name`, 
+ROUND(AVG(p.ER_Time),2) AS avg_er_time
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+WHERE p.ER_Time IS NOT NULL
+GROUP BY s.`Staff Name` 
+ORDER BY avg_er_time DESC;
+
+-- 74. Staff with highest readmission patients
+SELECT s.`Staff Name`, COUNT(*) AS readmissions
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+WHERE p.Status = 'Readmit'
+GROUP BY s.`Staff Name` 
+ORDER BY readmissions DESC;
+ 
+-- 75. Staff with all 5-star rated patients
+SELECT s.`Staff Name`, 
+COUNT(*) AS five_star_patients
+FROM patient p 
+JOIN staff_details s ON p.Staff_Id = s.Staff_Id
+WHERE p.Rating = 5
+GROUP BY s.`Staff Name` 
+ORDER BY five_star_patients DESC;
