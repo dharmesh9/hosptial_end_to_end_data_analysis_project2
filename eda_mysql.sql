@@ -688,3 +688,46 @@ FROM patient p
 GROUP BY year 
 ORDER BY year;
 
+-- 81. Year-wise patient type split
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       SUM(CASE WHEN Patient_Type='Inpatient'  THEN 1 ELSE 0 END) AS inpatients,
+       SUM(CASE WHEN Patient_Type='outpatient' THEN 1 ELSE 0 END) AS outpatients
+FROM patient p
+GROUP BY year 
+ORDER BY year;
+
+-- 82. Year-wise sentiment trend
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       SUM(CASE WHEN FZ_Me='Postive'  THEN 1 ELSE 0 END) AS positive,
+       SUM(CASE WHEN FZ_Me='Negative' THEN 1 ELSE 0 END) AS negative,
+       SUM(CASE WHEN FZ_Me='Neutral'  THEN 1 ELSE 0 END) AS neutral
+FROM patient p 
+GROUP BY year 
+ORDER BY year;
+ 
+-- 83. Month-wise ICU and Death count
+SELECT SUBSTRING(Admission_Dates,4,2) AS month,
+       SUM(CASE WHEN Status='ICU'   THEN 1 ELSE 0 END) AS icu_count,
+       SUM(CASE WHEN Status='Death' THEN 1 ELSE 0 END) AS death_count
+FROM patient p  
+GROUP BY month 
+ ORDER BY month;
+ 
+-- 84. First and last admission date per department
+SELECT d.Department_Name,
+       MIN(p.Admission_Dates) AS first_admission,
+       MAX(p.Admission_Dates) AS last_admission,
+       COUNT(p.Patient_ID) AS total_patients
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name;
+ 
+-- 85. Year-wise readmission count
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       SUM(CASE WHEN Status='Readmit' THEN 1 ELSE 0 END) AS readmissions,
+       COUNT(*) AS total,
+       ROUND(SUM(CASE WHEN Status='Readmit' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS readmit_rate_pct
+FROM patient p  
+GROUP BY year 
+ORDER BY year;
+ 
