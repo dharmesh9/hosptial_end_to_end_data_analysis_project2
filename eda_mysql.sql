@@ -731,3 +731,38 @@ FROM patient p
 GROUP BY year 
 ORDER BY year;
  
+-- 86. Cumulative patients per department over time
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+d.Department_Name, 
+COUNT(p.Patient_ID) as total_patients,
+SUM(COUNT(p.Patient_ID)) OVER (PARTITION BY d.Department_Name ORDER BY SUBSTRING(Admission_Dates,7,4)) AS cumulative_patients
+FROM patient p
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY year,d.Department_Name;
+
+-- 87. Patient cost vs dept avg and overall avg
+SELECT Patient_ID, Name, d.Department_Name, Treatemen_Cost,
+       ROUND(AVG(Treatemen_Cost) OVER (PARTITION BY p.Dpt_ID),2) AS dept_avg,
+       ROUND(AVG(Treatemen_Cost) OVER (),2)                       AS overall_avg,
+       ROUND(Treatemen_Cost - AVG(Treatemen_Cost) OVER (PARTITION BY p.Dpt_ID),2) AS diff_from_dept_avg
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+ORDER BY diff_from_dept_avg DESC;
+
+-- 88. Dense rank of patients by rating within department
+SELECT p.Patient_ID, p.Name, d.Department_Name, p.Rating,
+       DENSE_RANK() OVER (PARTITION BY p.Dpt_ID ORDER BY p.Rating DESC) AS rating_rank
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID;
+
+-- 89. 5-row moving average of treatment cost over admission date
+SELECT Admission_Dates, Patient_ID, Name, Treatemen_Cost,
+       ROUND(AVG(Treatemen_Cost) OVER (ORDER BY Admission_Dates ROWS BETWEEN 4 PRECEDING AND CURRENT ROW),2) AS moving_avg_5
+FROM patient;
+ 
+-- 90. Lead and lag on treatment cost
+SELECT Patient_ID, Name, Admission_Dates, Treatemen_Cost,
+       LAG(Treatemen_Cost)  OVER (ORDER BY Admission_Dates) AS prev_cost,
+       LEAD(Treatemen_Cost) OVER (ORDER BY Admission_Dates) AS next_cost,
+       ROUND(Treatemen_Cost - LAG(Treatemen_Cost) OVER (ORDER BY Admission_Dates),2) AS cost_change
+FROM patient;
