@@ -642,3 +642,49 @@ JOIN staff_details s ON p.Staff_Id = s.Staff_Id
 WHERE p.Rating = 5
 GROUP BY s.`Staff Name` 
 ORDER BY five_star_patients DESC;
+
+-- 76. Year-wise patient count and revenue
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       COUNT(*) AS total_patients,
+       ROUND(SUM(Treatemen_Cost),2) AS total_revenue,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost
+FROM patient p
+GROUP BY year 
+ORDER BY year;
+
+-- 77. Month-wise patient count
+SELECT SUBSTRING(Admission_Dates,4,2) AS month,
+       COUNT(*) AS total_patients,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost
+FROM patient p
+GROUP BY month 
+ORDER BY month;
+
+ 
+-- 78. Year + month patient trend
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       SUBSTRING(Admission_Dates,4,2) AS month,
+       COUNT(*) AS total_patients,
+       ROUND(SUM(Treatemen_Cost),2) AS total_revenue
+FROM patient p
+GROUP BY year, month 
+ORDER BY year, month;
+
+-- 79. Year-wise death and ICU trend
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       SUM(CASE WHEN Status='ICU'   THEN 1 ELSE 0 END) AS icu_count,
+       SUM(CASE WHEN Status='Death' THEN 1 ELSE 0 END) AS death_count,
+       COUNT(*) AS total
+FROM patient p
+GROUP BY year 
+ORDER BY year;
+
+-- 80. Year-wise avg rating trend
+SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+       ROUND(AVG(Rating),2) AS avg_rating,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2) AS avg_los
+FROM patient p
+GROUP BY year 
+ORDER BY year;
+
