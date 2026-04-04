@@ -766,3 +766,33 @@ SELECT Patient_ID, Name, Admission_Dates, Treatemen_Cost,
        LEAD(Treatemen_Cost) OVER (ORDER BY Admission_Dates) AS next_cost,
        ROUND(Treatemen_Cost - LAG(Treatemen_Cost) OVER (ORDER BY Admission_Dates),2) AS cost_change
 FROM patient;
+
+-- 91. Percentile rank of patients by treatment cost
+SELECT Patient_ID, Name, Treatemen_Cost,
+       ROUND(PERCENT_RANK() OVER (ORDER BY Treatemen_Cost)*100,2) AS percentile_rank
+FROM patient p
+ORDER BY percentile_rank DESC;
+ 
+-- 92. NTILE 4 cost quartile per patient
+SELECT Patient_ID, Name, Treatemen_Cost,
+       NTILE(4) OVER (ORDER BY Treatemen_Cost) AS cost_quartile
+FROM patient;
+ 
+-- 93. Rank patients by LOS within each department
+SELECT p.Patient_ID, p.Name, d.Department_Name, p.LOS,
+       RANK() OVER (PARTITION BY p.Dpt_ID ORDER BY p.LOS DESC) AS los_rank
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID;
+ 
+-- 94. Running total revenue over admission date
+SELECT Admission_Dates, Patient_ID, Treatemen_Cost,
+       ROUND(SUM(Treatemen_Cost) OVER (ORDER BY Admission_Dates),2) AS running_revenue
+FROM patient;
+ 
+-- 95. First and last patient per department using FIRST_VALUE / LAST_VALUE
+SELECT DISTINCT d.Department_Name,
+       FIRST_VALUE(p.Name) OVER (PARTITION BY p.Dpt_ID ORDER BY p.Admission_Dates)                                          AS first_patient,
+       LAST_VALUE(p.Name)  OVER (PARTITION BY p.Dpt_ID ORDER BY p.Admission_Dates ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_patient
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID;
+ 
