@@ -796,3 +796,62 @@ SELECT DISTINCT d.Department_Name,
 FROM patient p 
 JOIN department d ON p.Dpt_ID = d.Dpt_ID;
  
+-- 96. Rank departments by avg rating
+SELECT d.Department_Name,
+       ROUND(AVG(p.Rating),2) AS avg_rating,
+       RANK() OVER (ORDER BY AVG(p.Rating) DESC) AS rating_rank
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name;
+ 
+-- 97. Row number per patient within each status group
+SELECT Patient_ID, Name, Status, Admission_Dates,
+       ROW_NUMBER() OVER (PARTITION BY Status ORDER BY Admission_Dates) AS row_num
+FROM patient;
+
+-- 98. CTE: Departments above average patient count
+WITH dept_counts AS (
+    SELECT d.Department_Name, COUNT(p.Patient_ID) AS total
+    FROM patient p 
+    JOIN department d ON p.Dpt_ID = d.Dpt_ID
+    GROUP BY d.Department_Name
+)
+SELECT Department_Name, total,
+       ROUND((SELECT AVG(total) FROM dept_counts),2) AS overall_avg
+FROM dept_counts
+WHERE total > (SELECT AVG(total) FROM dept_counts)
+ORDER BY total DESC;
+ 
+-- 99. CTE: Patient cost segments
+WITH cost_segments AS (
+    SELECT *,
+        CASE
+            WHEN Treatemen_Cost < 100  THEN 'Low'
+            WHEN Treatemen_Cost < 500  THEN 'Medium'
+            ELSE 'High'
+        END AS cost_segment
+    FROM patient p
+)
+SELECT cost_segment, COUNT(*) AS total,
+       ROUND(AVG(Rating),2) AS avg_rating,
+       ROUND(AVG(LOS),2)    AS avg_los,
+       ROUND(AVG(ER_Time),2) AS avg_er
+FROM cost_segments 
+GROUP BY cost_segment 
+ORDER BY MIN(Treatemen_Cost);
+ 
+-- 100. CTE: High risk patients (ICU or Death with high cost)
+WITH high_risk AS (
+    SELECT p.*, d.Department_Name
+    FROM patient p 
+    JOIN department d ON p.Dpt_ID = d.Dpt_ID
+    WHERE p.Status IN ('ICU','Death')
+)
+SELECT Department_Name,
+       COUNT(*) AS high_risk_count,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2) AS avg_los
+FROM high_risk
+GROUP BY Department_Name
+ ORDER BY high_risk_count DESC;
+ 
