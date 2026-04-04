@@ -855,3 +855,49 @@ FROM high_risk
 GROUP BY Department_Name
  ORDER BY high_risk_count DESC;
  
+-- 101. Patients above 90th percentile treatment cost
+SELECT Patient_ID, Name, Treatemen_Cost, Department_Name
+FROM (
+    SELECT p.Patient_ID, p.Name, p.Treatemen_Cost, d.Department_Name,
+           NTILE(10) OVER (ORDER BY p.Treatemen_Cost) AS decile
+    FROM patient p
+    JOIN department d ON p.Dpt_ID = d.Dpt_ID
+) t
+WHERE decile = 10
+ORDER BY Treatemen_Cost DESC;
+
+-- 102. States where death rate is highest
+SELECT State, COUNT(*) AS total,
+       SUM(CASE WHEN Status='Death' THEN 1 ELSE 0 END) AS deaths,
+       ROUND(SUM(CASE WHEN Status='Death' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS death_rate_pct
+FROM patient GROUP BY State
+HAVING total > 10 
+ORDER BY death_rate_pct DESC LIMIT 10;
+ 
+-- 103. Multi-dimension: Gender + Age bucket + Patient type
+SELECT Gender, Age_Bucket, Patient_Type,
+       COUNT(*) AS total,
+       ROUND(AVG(Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(LOS),2) AS avg_los,
+       ROUND(AVG(Rating),2) AS avg_rating
+FROM patient
+GROUP BY Gender, Age_Bucket, Patient_Type
+ORDER BY Gender, Age_Bucket, Patient_Type;
+ 
+-- 104. Patients with above-average LOS
+SELECT p.Patient_ID, p.Name, p.LOS, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.LOS > (SELECT AVG(LOS) FROM patient)
+ORDER BY p.LOS DESC;
+ 
+-- 105. CTE: Top cost patient per department
+WITH ranked_cost AS (
+    SELECT p.Patient_ID, p.Name, d.Department_Name, p.Treatemen_Cost,
+           RANK() OVER (PARTITION BY p.Dpt_ID ORDER BY p.Treatemen_Cost DESC) AS rnk
+    FROM patient p 
+    JOIN department d ON p.Dpt_ID = d.Dpt_ID
+)
+SELECT * 
+FROM ranked_cost 
+WHERE rnk = 1;
