@@ -977,3 +977,65 @@ SELECT Patient_ID, Name, Rating, FZ_Me, Feedback, d.Department_Name
 FROM patient p 
 JOIN department d ON p.Dpt_ID = d.Dpt_ID
 WHERE Rating = 1 AND FZ_Me = 'Postive';
+
+ 
+-- 116. Overall hospital KPI dashboard
+SELECT
+    COUNT(*)                                                                      AS total_patients,
+    SUM(CASE WHEN Patient_Type='Inpatient'  THEN 1 ELSE 0 END)                  AS inpatients,
+    SUM(CASE WHEN Patient_Type='outpatient' THEN 1 ELSE 0 END)                  AS outpatients,
+    ROUND(AVG(Treatemen_Cost),2)                                                  AS avg_cost,
+    ROUND(SUM(Treatemen_Cost),2)                                                  AS total_revenue,
+    ROUND(AVG(Rating),2)                                                          AS avg_rating,
+    ROUND(AVG(LOS),2)                                                             AS avg_los,
+    ROUND(AVG(ER_Time),2)                                                         AS avg_er_time,
+    SUM(CASE WHEN Status='ICU'     THEN 1 ELSE 0 END)                           AS icu_total,
+    SUM(CASE WHEN Status='Death'   THEN 1 ELSE 0 END)                           AS death_total,
+    SUM(CASE WHEN Status='Readmit' THEN 1 ELSE 0 END)                           AS readmit_total,
+    ROUND(SUM(CASE WHEN FZ_Me='Postive'  THEN 1 ELSE 0 END)*100.0/COUNT(*),2)  AS positive_pct,
+    ROUND(SUM(CASE WHEN FZ_Me='Negative' THEN 1 ELSE 0 END)*100.0/COUNT(*),2)  AS negative_pct
+FROM patient;
+ 
+-- 117. Correlation proxy: cost, rating, LOS, ER per department
+SELECT d.Department_Name,
+       ROUND(AVG(p.Treatemen_Cost),2) AS avg_cost,
+       ROUND(AVG(p.Rating),2)         AS avg_rating,
+       ROUND(AVG(p.LOS),2)            AS avg_los,
+       ROUND(AVG(p.ER_Time),2)        AS avg_er
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name 
+ORDER BY avg_cost DESC;
+ 
+-- 118. Full EDA view
+CREATE OR REPLACE VIEW vw_eda_full AS
+SELECT
+    p.Patient_ID, p.Name, p.Gender, p.Age, p.Age_Bucket,
+    p.City, p.State, p.Patient_Type, p.Status,
+    p.Treatemen_Cost, p.LOS, p.ER_Time, p.Admission_Dates,
+    p.Feedback, p.Rating, p.FZ_Me, p.Custom, p.Bed,
+    d.Department_Name,
+    b.`Bed Number`,
+    s.`Staff Name`
+FROM patient p
+LEFT JOIN department    d ON p.Dpt_ID   = d.Dpt_ID
+LEFT JOIN bed_details   b ON p.Bed_ID   = b.Bed_ID
+LEFT JOIN staff_details s ON p.Staff_Id = s.Staff_Id;
+ 
+-- 119. Department summary view
+CREATE OR REPLACE VIEW vw_dept_summary AS
+SELECT d.Department_Name,
+       COUNT(p.Patient_ID)                                                             AS total_patients,
+       ROUND(AVG(p.Treatemen_Cost),2)                                                  AS avg_cost,
+       ROUND(SUM(p.Treatemen_Cost),2)                                                  AS total_revenue,
+       ROUND(AVG(p.Rating),2)                                                          AS avg_rating,
+       ROUND(AVG(p.LOS),2)                                                             AS avg_los,
+       SUM(CASE WHEN p.Status='Death' THEN 1 ELSE 0 END)                             AS deaths,
+       SUM(CASE WHEN p.Status='ICU'   THEN 1 ELSE 0 END)                             AS icu_cases,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Postive' THEN 1 ELSE 0 END)*100.0/COUNT(*),2)   AS satisfaction_pct
+FROM patient p JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name;
+ 
+-- 120. Use all views
+SELECT * FROM vw_eda_full;
+SELECT * FROM vw_dept_summary;
