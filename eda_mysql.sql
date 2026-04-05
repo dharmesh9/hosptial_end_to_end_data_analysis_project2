@@ -943,3 +943,37 @@ FROM patient p
 JOIN department d ON p.Dpt_ID = d.Dpt_ID
 WHERE ER_Time > (SELECT AVG(ER_Time) + 2*STDDEV(ER_Time) FROM patient WHERE ER_Time IS NOT NULL)
 ORDER BY ER_Time DESC;
+ 
+-- 111. High cost but low rating (poor value)
+SELECT p.Patient_ID, p.Name, p.Treatemen_Cost, p.Rating, d.Department_Name
+FROM patient p JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.Treatemen_Cost > (SELECT AVG(Treatemen_Cost) FROM patient)
+  AND p.Rating <= 2
+ORDER BY p.Treatemen_Cost DESC;
+ 
+-- 112. ICU patients with surprisingly low treatment cost
+SELECT p.Patient_ID, p.Name, p.Treatemen_Cost, p.Status, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.Status = 'ICU'
+  AND p.Treatemen_Cost < (SELECT AVG(Treatemen_Cost) FROM patient WHERE Status='ICU')/2
+ORDER BY p.Treatemen_Cost;
+ 
+-- 113. Discharged patients with very high LOS (above 20 days)
+SELECT p.Patient_ID, p.Name, p.LOS, p.Status, p.Treatemen_Cost, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.Status = 'Discharge' AND p.LOS > 20
+ORDER BY p.LOS DESC;
+ 
+-- 114. Patients with zero cost (possible data error)
+SELECT Patient_ID, Name, Treatemen_Cost, Status, Patient_Type, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE Treatemen_Cost = 0 OR Treatemen_Cost IS NULL;
+ 
+-- 115. Patients with rating 1 and positive sentiment (inconsistency check)
+SELECT Patient_ID, Name, Rating, FZ_Me, Feedback, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE Rating = 1 AND FZ_Me = 'Postive';
