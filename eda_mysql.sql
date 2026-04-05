@@ -901,3 +901,45 @@ WITH ranked_cost AS (
 SELECT * 
 FROM ranked_cost 
 WHERE rnk = 1;
+
+-- 106. Departments where negative feedback exceeds 20%
+SELECT d.Department_Name, COUNT(*) AS total,
+       SUM(CASE WHEN p.FZ_Me='Negative' THEN 1 ELSE 0 END) AS negative_count,
+       ROUND(SUM(CASE WHEN p.FZ_Me='Negative' THEN 1 ELSE 0 END)*100.0/COUNT(*),2) AS negative_pct
+FROM patient p JOIN department d ON p.Dpt_ID = d.Dpt_ID
+GROUP BY d.Department_Name
+HAVING negative_pct > 20 ORDER BY negative_pct DESC;
+ 
+-- 107. CTE: Year-over-year revenue growth
+WITH yearly AS (
+    SELECT SUBSTRING(Admission_Dates,7,4) AS year,
+           ROUND(SUM(Treatemen_Cost),2) AS revenue
+    FROM patient 
+    GROUP BY year
+)
+SELECT year, revenue,
+       LAG(revenue) OVER (ORDER BY year) AS prev_year_revenue,
+       ROUND((revenue - LAG(revenue) OVER (ORDER BY year))*100.0 / LAG(revenue) OVER (ORDER BY year),2) AS yoy_growth_pct
+FROM yearly;
+ 
+-- 108. Patients with high cost and negative sentiment
+SELECT p.Patient_ID, p.Name, p.Treatemen_Cost, p.FZ_Me, p.Rating, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE p.FZ_Me = 'Negative'
+  AND p.Treatemen_Cost > (SELECT AVG(Treatemen_Cost) FROM patient)
+ORDER BY p.Treatemen_Cost DESC;
+  
+-- 109. Treatment cost outliers (beyond 3 std deviations)
+SELECT Patient_ID, Name, Treatemen_Cost, d.Department_Name
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE Treatemen_Cost > (SELECT AVG(Treatemen_Cost) + 3*STDDEV(Treatemen_Cost) FROM patient)
+ORDER BY Treatemen_Cost DESC;
+ 
+-- 110. Patients with very long ER time (above avg + 2 std dev)
+SELECT Patient_ID, Name, ER_Time, d.Department_Name, Status
+FROM patient p 
+JOIN department d ON p.Dpt_ID = d.Dpt_ID
+WHERE ER_Time > (SELECT AVG(ER_Time) + 2*STDDEV(ER_Time) FROM patient WHERE ER_Time IS NOT NULL)
+ORDER BY ER_Time DESC;
